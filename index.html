@@ -230,10 +230,12 @@
         }
         
         .text-page {
-            font-size: 24px;
-            line-height: 1.6;
+            font-size: 20px;
+            line-height: 1.5;
             height: 100%;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
         .text-line {
@@ -392,7 +394,6 @@
     <script>
         // Constants
         const TEACHER_PASSWORD = "d2lza292aWM="; // Base64 encoded password 'viskovic'
-        const LINES_PER_PAGE = 15;
         const DB_NAME = 'ReaderDB';
         const DB_VERSION = 1;
         const STORE_NAME = 'texts';
@@ -427,6 +428,7 @@
         const nextPageBtn = document.getElementById('next-page');
         const pageStatus = document.getElementById('page-status');
         const studentNotice = document.getElementById('student-notice');
+        const textContainer = document.querySelector('.text-container');
         
         // Initialize IndexedDB
         function initDB() {
@@ -509,13 +511,39 @@
             }
         }
         
+        // Calculate the number of lines that can fit in the container
+        function calculateLinesPerPage() {
+            // Create a sample line to measure
+            const sampleLine = document.createElement('div');
+            sampleLine.className = 'text-line';
+            sampleLine.textContent = 'Sample Text Line';
+            sampleLine.style.visibility = 'hidden';
+            textDisplay.appendChild(sampleLine);
+            
+            // Measure the height of one line
+            const lineHeight = sampleLine.offsetHeight;
+            
+            // Remove the sample
+            textDisplay.removeChild(sampleLine);
+            
+            // Calculate how many lines can fit
+            const containerHeight = textContainer.clientHeight;
+            const padding = 60; // Account for padding (30px top and bottom)
+            
+            // Subtract padding and divide by line height
+            const linesPerPage = Math.floor((containerHeight - padding) / lineHeight);
+            
+            return Math.max(1, linesPerPage - 1); // Ensure at least 1 line, subtract 1 for safety margin
+        }
+        
         // Process text content into pages
         function processTextIntoPages(content) {
             const lines = content.split('\n');
+            const linesPerPage = calculateLinesPerPage();
             const pages = [];
             
-            for (let i = 0; i < lines.length; i += LINES_PER_PAGE) {
-                pages.push(lines.slice(i, i + LINES_PER_PAGE));
+            for (let i = 0; i < lines.length; i += linesPerPage) {
+                pages.push(lines.slice(i, i + linesPerPage));
             }
             
             return pages;
@@ -760,6 +788,25 @@
             overlay.classList.remove('open');
         }
         
+        // Handle window resize
+        function handleResize() {
+            // Only recalculate pages if text is loaded
+            if (currentText) {
+                currentTextPages = processTextIntoPages(currentText.content);
+                
+                // Adjust current page if needed
+                if (currentPage >= currentTextPages.length) {
+                    currentPage = Math.max(0, currentTextPages.length - 1);
+                }
+                
+                displayCurrentPage();
+                updatePageStatus();
+                
+                prevPageBtn.disabled = currentPage === 0;
+                nextPageBtn.disabled = currentPage >= currentTextPages.length - 1;
+            }
+        }
+        
         // Event Listeners
         teacherSelect.addEventListener('click', () => selectRole('teacher'));
         studentSelect.addEventListener('click', () => selectRole('student'));
@@ -798,6 +845,9 @@
             reader.readAsText(file);
         });
         
+        // Handle window resize
+        window.addEventListener('resize', handleResize);
+        
         // Back button for student
         window.addEventListener('popstate', () => {
             if (currentRole === 'student') {
@@ -821,6 +871,13 @@
                 console.error('Error initializing database:', error);
             }
         })();
+        
+        // Special handling for password input
+        passwordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                authenticateTeacher();
+            }
+        });
     </script>
 </body>
 </html>
