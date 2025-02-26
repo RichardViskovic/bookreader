@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Reading Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4cb5ae;
+            --background-color: #f9f9f9;
+            --text-color: #333;
+            --highlighted-color: #ffea8a;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            flex: 1;
+        }
+        
+        .selection-screen, .password-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            gap: 30px;
+        }
+        
+        .role-selection {
+            display: flex;
+            gap: 50px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .role-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .role-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .role-emoji {
+            font-size: 70px;
+            margin-bottom: 15px;
+        }
+        
+        .role-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 18px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #3a9e98;
+        }
+        
+        .btn-secondary {
+            background-color: #ddd;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #ccc;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .hamburger {
+            width: 30px;
+            height: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        
+        .hamburger span {
+            height: 3px;
+            width: 100%;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+        
+        .menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s;
+            z-index: 1000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .menu.open {
+            right: 0;
+        }
+        
+        .menu-close {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #777;
+        }
+        
+        .file-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .file-item {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .file-item:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .reader {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 100px);
+            position: relative;
+        }
+        
+        .text-container {
+            flex: 1;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .text-page {
+            font-size: 24px;
+            line-height: 1.6;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .text-line {
+            margin-bottom: 10px;
+            padding: 3px 0;
+            border-radius: 3px;
+        }
+        
+        .text-line.highlighted {
+            background-color: var(--highlighted-color);
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .nav-btn:hover {
+            background-color: #3a9e98;
+        }
+        
+        .nav-btn:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        
+        .status-bar {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #777;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+        }
+        
+        .overlay.open {
+            display: block;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        #student-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="selection-screen" class="selection-screen">
+        <h1>Select Your Role</h1>
+        <div class="role-selection">
+            <div class="role-button" id="teacher-select">
+                <div class="role-emoji">👨‍🏫</div>
+                <div class="role-title">Teacher</div>
+            </div>
+            <div class="role-button" id="student-select">
+                <div class="role-emoji">👨‍🎓</div>
+                <div class="role-title">Student</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="password-screen" class="password-screen hidden">
+        <h1>Teacher Authentication</h1>
+        <div class="password-form">
+            <input type="password" id="password-input" class="password-input" placeholder="Enter password">
+            <button id="submit-password" class="btn">Submit</button>
+            <button id="back-to-selection" class="btn btn-secondary">Back</button>
+        </div>
+    </div>
+    
+    <div id="reader-screen" class="hidden">
+        <div class="header">
+            <div class="logo">Interactive Reader</div>
+            <div class="hamburger" id="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div class="reader">
+                <div class="text-container">
+                    <div id="text-display" class="text-page">
+                        <div class="text-placeholder">
+                            <p>No text loaded. Please select or upload a text file from the menu.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="navigation">
+                    <button id="prev-page" class="nav-btn" disabled>&lt;</button>
+                    <button id="next-page" class="nav-btn" disabled>&gt;</button>
+                </div>
+                
+                <div class="status-bar">
+                    <span id="page-status">Page 0 of 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="menu" class="menu">
+        <button id="menu-close" class="menu-close">×</button>
+        
+        <div class="file-selector">
+            <h3>Upload New Text</h3>
+            <input type="file" id="file-upload" accept=".txt">
+            
+            <h3>Saved Texts</h3>
+            <div id="file-list" class="file-list">
+                <p>No saved texts found.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="overlay" class="overlay"></div>
+    
+    <div id="student-notice" class="hidden">
+        Viewing as Student - Content controlled by teacher
+    </div>
+    
+    <script>
+        // Constants
+        const TEACHER_PASSWORD = "d2lza292aWM="; // Base64 encoded password 'viskovic'
+        const LINES_PER_PAGE = 15;
+        const DB_NAME = 'ReaderDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'texts';
+        
+        // State variables
+        let currentRole = null; // 'teacher' or 'student'
+        let db = null;
+        let currentText = null;
+        let currentTextPages = [];
+        let currentPage = 0;
+        let highlightMode = false;
+        let highlightedLineIndex = 0;
+        let syncChannel = new BroadcastChannel('reader-sync');
+        
+        // DOM Elements
+        const selectionScreen = document.getElementById('selection-screen');
+        const passwordScreen = document.getElementById('password-screen');
+        const readerScreen = document.getElementById('reader-screen');
+        const teacherSelect = document.getElementById('teacher-select');
+        const studentSelect = document.getElementById('student-select');
+        const passwordInput = document.getElementById('password-input');
+        const submitPassword = document.getElementById('submit-password');
+        const backToSelection = document.getElementById('back-to-selection');
+        const menuToggle = document.getElementById('menu-toggle');
+        const menu = document.getElementById('menu');
+        const menuClose = document.getElementById('menu-close');
+        const overlay = document.getElementById('overlay');
+        const fileUpload = document.getElementById('file-upload');
+        const fileList = document.getElementById('file-list');
+        const textDisplay = document.getElementById('text-display');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageStatus = document.getElementById('page-status');
+        const studentNotice = document.getElementById('student-notice');
+        
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                
+                request.onerror = (event) => {
+                    console.error('IndexedDB error:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+        
+        // Save text to IndexedDB
+        function saveText(title, content) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const text = {
+                    id: Date.now().toString(),
+                    title: title,
+                    content: content,
+                    dateAdded: new Date()
+                };
+                
+                const request = store.add(text);
+                
+                request.onsuccess = () => resolve(text);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+        
+        // Get all saved texts
+        function getAllTexts() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+        
+        // Load saved texts into the menu
+        async function loadSavedTexts() {
+            try {
+                const texts = await getAllTexts();
+                
+                if (texts.length === 0) {
+                    fileList.innerHTML = '<p>No saved texts found.</p>';
+                    return;
+                }
+                
+                fileList.innerHTML = '';
+                texts.forEach(text => {
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.textContent = text.title;
+                    item.addEventListener('click', () => {
+                        loadText(text);
+                        closeMenu();
+                    });
+                    fileList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading saved texts:', error);
+            }
+        }
+        
+        // Process text content into pages
+        function processTextIntoPages(content) {
+            const lines = content.split('\n');
+            const pages = [];
+            
+            for (let i = 0; i < lines.length; i += LINES_PER_PAGE) {
+                pages.push(lines.slice(i, i + LINES_PER_PAGE));
+            }
+            
+            return pages;
+        }
+        
+        // Load text into the reader
+        function loadText(text) {
+            currentText = text;
+            currentTextPages = processTextIntoPages(text.content);
+            currentPage = 0;
+            highlightedLineIndex = 0;
+            
+            displayCurrentPage();
+            updatePageStatus();
+            
+            prevPageBtn.disabled = currentPage === 0;
+            nextPageBtn.disabled = currentPage >= currentTextPages.length - 1;
+            
+            if (currentRole === 'teacher') {
+                // Broadcast to student view
+                syncChannel.postMessage({
+                    action: 'loadText',
+                    text: text
+                });
+            }
+        }
+        
+        // Display the current page
+        function displayCurrentPage() {
+            if (!currentTextPages || currentTextPages.length === 0) {
+                textDisplay.innerHTML = '<p>No text loaded.</p>';
+                return;
+            }
+            
+            const pageLines = currentTextPages[currentPage];
+            textDisplay.innerHTML = '';
+            
+            pageLines.forEach((line, index) => {
+                const lineElement = document.createElement('div');
+                lineElement.className = 'text-line';
+                lineElement.textContent = line;
+                
+                if (highlightMode && index === highlightedLineIndex) {
+                    lineElement.classList.add('highlighted');
+                }
+                
+                textDisplay.appendChild(lineElement);
+            });
+            
+            if (currentRole === 'teacher') {
+                // Broadcast to student view
+                syncChannel.postMessage({
+                    action: 'displayPage',
+                    page: currentPage,
+                    highlightMode: highlightMode,
+                    highlightedLineIndex: highlightedLineIndex
+                });
+            }
+        }
+        
+        // Update page status
+        function updatePageStatus() {
+            if (currentTextPages.length === 0) {
+                pageStatus.textContent = 'Page 0 of 0';
+            } else {
+                pageStatus.textContent = `Page ${currentPage + 1} of ${currentTextPages.length}`;
+            }
+        }
+        
+        // Navigation: previous page
+        function goToPrevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                highlightedLineIndex = 0;
+                displayCurrentPage();
+                updatePageStatus();
+                
+                prevPageBtn.disabled = currentPage === 0;
+                nextPageBtn.disabled = false;
+            }
+        }
+        
+        // Navigation: next page
+        function goToNextPage() {
+            if (currentPage < currentTextPages.length - 1) {
+                currentPage++;
+                highlightedLineIndex = 0;
+                displayCurrentPage();
+                updatePageStatus();
+                
+                prevPageBtn.disabled = false;
+                nextPageBtn.disabled = currentPage >= currentTextPages.length - 1;
+            }
+        }
+        
+        // Move highlight up
+        function moveHighlightUp() {
+            if (!highlightMode || !currentTextPages || currentTextPages.length === 0) return;
+            
+            if (highlightedLineIndex > 0) {
+                highlightedLineIndex--;
+                displayCurrentPage();
+            } else if (currentPage > 0) {
+                currentPage--;
+                highlightedLineIndex = currentTextPages[currentPage].length - 1;
+                displayCurrentPage();
+                updatePageStatus();
+                
+                prevPageBtn.disabled = currentPage === 0;
+                nextPageBtn.disabled = false;
+            }
+        }
+        
+        // Move highlight down
+        function moveHighlightDown() {
+            if (!highlightMode || !currentTextPages || currentTextPages.length === 0) return;
+            
+            if (highlightedLineIndex < currentTextPages[currentPage].length - 1) {
+                highlightedLineIndex++;
+                displayCurrentPage();
+            } else if (currentPage < currentTextPages.length - 1) {
+                currentPage++;
+                highlightedLineIndex = 0;
+                displayCurrentPage();
+                updatePageStatus();
+                
+                prevPageBtn.disabled = false;
+                nextPageBtn.disabled = currentPage >= currentTextPages.length - 1;
+            }
+        }
+        
+        // Toggle highlight mode
+        function toggleHighlightMode() {
+            highlightMode = !highlightMode;
+            displayCurrentPage();
+        }
+        
+        // Role selection
+        function selectRole(role) {
+            currentRole = role;
+            
+            if (role === 'teacher') {
+                selectionScreen.classList.add('hidden');
+                passwordScreen.classList.remove('hidden');
+                passwordInput.focus();
+            } else if (role === 'student') {
+                selectionScreen.classList.add('hidden');
+                readerScreen.classList.remove('hidden');
+                studentNotice.classList.remove('hidden');
+                
+                // Listen for updates from teacher
+                syncChannel.onmessage = (event) => {
+                    const message = event.data;
+                    
+                    switch (message.action) {
+                        case 'loadText':
+                            loadText(message.text);
+                            break;
+                        case 'displayPage':
+                            currentPage = message.page;
+                            highlightMode = message.highlightMode;
+                            highlightedLineIndex = message.highlightedLineIndex;
+                            displayCurrentPage();
+                            updatePageStatus();
+                            
+                            prevPageBtn.disabled = currentPage === 0;
+                            nextPageBtn.disabled = currentPage >= currentTextPages.length - 1;
+                            break;
+                    }
+                };
+            }
+        }
+        
+        // Authenticate teacher
+        function authenticateTeacher() {
+            const password = passwordInput.value;
+            
+            if (atob(TEACHER_PASSWORD) === password) {
+                passwordScreen.classList.add('hidden');
+                readerScreen.classList.remove('hidden');
+                
+                // Enable teacher controls
+                prevPageBtn.disabled = true;
+                nextPageBtn.disabled = true;
+                
+                // Add keyboard listeners for teacher
+                document.addEventListener('keydown', handleTeacherKeyboard);
+                
+                // Load saved texts
+                loadSavedTexts();
+            } else {
+                alert('Incorrect password');
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Go back to role selection
+                passwordScreen.classList.add('hidden');
+                selectionScreen.classList.remove('hidden');
+            }
+        }
+        
+        // Handle teacher keyboard shortcuts
+        function handleTeacherKeyboard(event) {
+            if (currentRole !== 'teacher') return;
+            
+            switch (event.key) {
+                case 'ArrowLeft':
+                    goToPrevPage();
+                    break;
+                case 'ArrowRight':
+                    goToNextPage();
+                    break;
+                case 'ArrowUp':
+                    if (highlightMode) {
+                        moveHighlightUp();
+                        event.preventDefault();
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (highlightMode) {
+                        moveHighlightDown();
+                        event.preventDefault();
+                    }
+                    break;
+                case 'CapsLock':
+                    toggleHighlightMode();
+                    break;
+            }
+        }
+        
+        // Open menu
+        function openMenu() {
+            if (currentRole !== 'teacher') return;
+            
+            menu.classList.add('open');
+            overlay.classList.add('open');
+        }
+        
+        // Close menu
+        function closeMenu() {
+            menu.classList.remove('open');
+            overlay.classList.remove('open');
+        }
+        
+        // Event Listeners
+        teacherSelect.addEventListener('click', () => selectRole('teacher'));
+        studentSelect.addEventListener('click', () => selectRole('student'));
+        submitPassword.addEventListener('click', authenticateTeacher);
+        backToSelection.addEventListener('click', () => {
+            passwordScreen.classList.add('hidden');
+            selectionScreen.classList.remove('hidden');
+        });
+        
+        menuToggle.addEventListener('click', openMenu);
+        menuClose.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+        
+        prevPageBtn.addEventListener('click', goToPrevPage);
+        nextPageBtn.addEventListener('click', goToNextPage);
+        
+        fileUpload.addEventListener('change', (event) => {
+            if (event.target.files.length === 0) return;
+            
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+                try {
+                    const content = e.target.result;
+                    const text = await saveText(file.name, content);
+                    loadText(text);
+                    loadSavedTexts();
+                    closeMenu();
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    alert('Error processing file');
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        // Back button for student
+        window.addEventListener('popstate', () => {
+            if (currentRole === 'student') {
+                // Go back to role selection
+                readerScreen.classList.add('hidden');
+                selectionScreen.classList.remove('hidden');
+                studentNotice.classList.add('hidden');
+                currentRole = null;
+                
+                // Stop listening for updates
+                syncChannel.onmessage = null;
+            }
+        });
+        
+        // Initialize
+        (async function init() {
+            try {
+                await initDB();
+                console.log('Database initialized');
+            } catch (error) {
+                console.error('Error initializing database:', error);
+            }
+        })();
+    </script>
+</body>
+</html>
